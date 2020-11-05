@@ -29,10 +29,27 @@ public class PolicyHandler{
             delivery.setOrderId(paid.getOrderId());
             delivery.setCustomerId(paid.getCustomerId());
             delivery.setStatus("Shipped");
+            delivery.setIsMile("N");
 
             deliveryRepository.save(delivery);
         }
     }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverMileageUsed_Ship(@Payload MileageUsed mileageUsed){
+
+        if(mileageUsed.isMe() && "OrderedByMileage".equals(mileageUsed.getStatus())){
+            System.out.println("##### listener Ship : " + mileageUsed.toJson());
+            Delivery delivery = new Delivery();
+            delivery.setOrderId(mileageUsed.getOrderId());
+            delivery.setCustomerId(mileageUsed.getCustomerId());
+            delivery.setStatus("Shipped");
+            delivery.setIsMile("Y");
+
+            deliveryRepository.save(delivery);
+        }
+    }
+
     @StreamListener(KafkaProcessor.INPUT)
     public void wheneverPayCanceled_DeliveryCancel(@Payload PayCanceled payCanceled){
 
@@ -48,5 +65,18 @@ public class PolicyHandler{
             }
         }
     }
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverUseCanceled_DeliveryCancel(@Payload UseCanceled useCanceled){
 
+        if(useCanceled.isMe() && "CancelUsedMileage".equals(useCanceled.getStatus())){
+            System.out.println("##### listener DeliveryCancel : " + useCanceled.toJson());
+            List<Delivery> deliveryList = deliveryRepository.findByOrderId(useCanceled.getOrderId());
+            for(Delivery delivery : deliveryList){
+                // view 객체에 이벤트의 eventDirectValue 를 set 함
+                delivery.setStatus("DeliveryCanceled");
+                // view 레파지 토리에 save
+                deliveryRepository.save(delivery);
+            }
+        }
+    }
 }

@@ -14,6 +14,7 @@ public class Delivery {
     private Long orderId;
     private Long customerId;
     private String status;
+    private String isMile;
 
     @PostPersist
     public void onPostPersist(){
@@ -63,7 +64,11 @@ public class Delivery {
         this.status = status;
     }
 
+    public String getIsMile() {
+        return isMile;
+    }
 
-
-
+    public void setIsMile(String isMile) {
+        this.isMile = isMile;
+    }
 }
